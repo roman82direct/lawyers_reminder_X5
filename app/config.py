@@ -9,6 +9,7 @@ class ExcelConfig:
 
     excel_path: Path = Path('data/submissions.xlsx')
     sheet_name: str | None = None
+    header_position: int = 1
     license_name_column: str = 'Объект'
     license_end_column: str = 'Дата окончания лицензии'
     ability_date_column: str = 'Дата когда возможно подавать на лицензирование'

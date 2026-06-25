@@ -6,9 +6,7 @@ from app.services.reminder import ReminderService
 def main():
     setup_logging()
     xls_config = ExcelConfig()
-    reminder = ReminderService(
-        ExcelService(xls_config)
-    )
+    reminder = ReminderService(ExcelService(xls_config))
     reminder.run()
 
 

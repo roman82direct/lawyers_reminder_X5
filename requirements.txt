@@ -1,1 +1,2 @@
 openpyxl==3.1.5
+workalendar==17.0.0
