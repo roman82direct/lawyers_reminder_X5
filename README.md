@@ -37,24 +37,22 @@ lawyers_reminder_X5/
 │   ├── __init__.py
 │   ├── main.py
 │   ├── config.py
-│   ├── logging_config.py
-│   ├── scheduler.py
 │   ├── services/
 │   │   ├── __init__.py
-│   │   ├── excel_service.py
-│   │   ├── reminder_service.py
-│   │   └── notification_service.py
+│   │   ├── excel.py
+│   │   └── notification.py
+│   │   ├── reminder.py
 │   ├── domain/
 │   │   ├── __init__.py
 │   │   ├── models.py
 │   │   └── exceptions.py
-│   ├── utils/
+│   ├── handlers/
 │   │   ├── __init__.py
 │   │   └── dates.py
 │   └── templates/
 │       └── message_template.txt
 ├── data/
-│   └── licenses.xlsx
+│   └── submissions.xlsx
 ├── logs/
 │   └── app.log
 ├── dist/
@@ -68,8 +66,6 @@ lawyers_reminder_X5/
 ```text
 MainApp
  ├── AppConfig
- ├── SchedulerService
- │    └── ReminderJob
  ├── ReminderService
  │    ├── ExcelService
  │    └── NotificationService
@@ -79,7 +75,6 @@ MainApp
 ### Ответственность классов
 MainApp — запускает приложение.
 AppConfig — хранит настройки.
-SchedulerService — планирует вызов задачи.
 ReminderService — координирует бизнес-логику.
 ExcelService — читает и пишет файл.
 NotificationService — показывает уведомление.
