@@ -6,8 +6,8 @@ from datetime import date
 class LicenseObject:
     """Класс объекта строки в таблице."""
 
-    row_number: int
     object_name: str
-    object_address: str
     license_end_date: date
-    submission_date: date | None = None
+    ability_to_license_date: date | None = None
+    renewal_date: date | None = None
+    reissue_date: date | None = None
