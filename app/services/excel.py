@@ -25,19 +25,16 @@ class ExcelService:
         wb = load_workbook(self.config.excel_path)
         ws = (wb[self.config.sheet_name] if self.config.sheet_name
               else wb.active)
-        headers = self._get_headers(ws)
 
         for column in (
             self.config.ability_date_column,
             self.config.renewal_date_column,
             self.config.reissue_date_column
         ):
-            self._ensure_column(ws, headers, column_name=column)
+            self._ensure_column(ws, self._get_headers(ws), column_name=column)
 
         headers = self._get_headers(ws)
-        self.logger.debug('headers: %s', headers)
 
-        # получаем колонки
         license_name_col = headers[self.config.license_name_column]
         license_end_col = headers[self.config.license_end_column]
         ability_col = headers[self.config.ability_date_column]
@@ -88,8 +85,8 @@ class ExcelService:
                 cell.number_format = self.config.date_format
                 cell.border = self.cell_border
 
-        filename = datetime.now().strftime('%Y-%m-%d_%H-%M')
-        wb.save(f'data/{filename}_submissions.xlsx')
+        # filename = datetime.now().strftime('%Y-%m-%d_%H-%M')
+        wb.save('data/_submissions.xlsx')
 
     def _get_headers(self, ws) -> dict[str, int]:
         """Извлекает названия колонок."""
@@ -135,7 +132,7 @@ class ExcelService:
                 self.logger.error(message)
                 return None
 
-        self.logger.error(message)
+        # self.logger.error(message)
         return None
 
     def _subtract_working_days(self, start_date: date, days: int) -> date:
