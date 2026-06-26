@@ -22,13 +22,11 @@
 | Упаковка | PyInstaller | Собрать в exe |
 | Excel | openpyxl | Чтение/запись xlsx |
 | Автозапуск | Windows Task Scheduler | Надежный запуск при старте/по времени |
-| Уведомления |	plyer / winotify | Push-уведомление в Windows |
+| Уведомления |	desktop_notifier | Push-уведомление в Windows |
 | Логи | logging | Диагностика и сопровождение |
 <!-- | Планирование | APScheduler или Task Scheduler | Ежедневный запуск в 00:00 | -->
 
 ## Архитектура
-
-Ежедневный запуск через Планировщик Windows. Сам exe будет стартовать в 00:00, отрабатывать сценарий и завершаться; при необходимости отдельной задачей можно запускать его при входе в систему для проверки состояния или для ручного режима. 
 
 ### Структура проекта
 ```text
@@ -42,15 +40,6 @@ lawyers_reminder_X5/
 │   │   ├── excel.py
 │   │   └── notification.py
 │   │   ├── reminder.py
-│   ├── domain/
-│   │   ├── __init__.py
-│   │   ├── models.py
-│   │   └── exceptions.py
-│   ├── handlers/
-│   │   ├── __init__.py
-│   │   └── dates.py
-│   └── templates/
-│       └── message_template.txt
 ├── data/
 │   └── submissions.xlsx
 ├── logs/
@@ -77,10 +66,8 @@ MainApp — запускает приложение.
 AppConfig — хранит настройки.
 ReminderService — координирует бизнес-логику.
 ExcelService — читает и пишет файл.
-NotificationService — показывает уведомление.
+NotificationService — отправляет уведомление с помощью desktop_notifier.
 
 Добавь file lock и обработку случая, когда Excel открыт пользователем.
 Вынеси конфиг в .env.
-Добавь валидацию заголовков и формата дат.
 Сделай отдельный режим --run-once для ручного запуска и тестов.
-Для Windows-уведомлений лучше выбрать конкретную библиотеку и протестировать ее на целевой ОС.

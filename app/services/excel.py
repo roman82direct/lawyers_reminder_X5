@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
 from openpyxl import load_workbook
@@ -7,6 +8,14 @@ from openpyxl.utils import get_column_letter
 from workalendar.europe import Russia
 
 from app.config import ExcelConfig
+
+
+@dataclass(frozen=True)
+class ProcessResult:
+    """Датакласс результатов обработки xlsx-файла."""
+
+    objects_to_notify: list[str]
+    errors: list[str]
 
 
 class ExcelService:
@@ -20,11 +29,14 @@ class ExcelService:
         self.calendar = Russia()
         self.logger = logging.getLogger(__name__)
 
-    def process_file(self):
+    def process_file(self) -> ProcessResult:
         """Обрабатывает файл по тех. заданию."""
         wb = load_workbook(self.config.excel_path)
         ws = (wb[self.config.sheet_name] if self.config.sheet_name
               else wb.active)
+
+        objects_to_notify: list[str] = []
+        errors: list[str] = []
 
         for column in (
             self.config.ability_date_column,
@@ -41,6 +53,9 @@ class ExcelService:
         renewal_col = headers[self.config.renewal_date_column]
         reissue_col = headers[self.config.reissue_date_column]
 
+        target_date = self._add_working_days(date.today(),
+                                             self.config.notify_before_days)
+
         for row in range(2, ws.max_row + 1):
             license_name_cell = ws.cell(row, license_name_col)
             license_end_cell = ws.cell(row, license_end_col)
@@ -52,6 +67,8 @@ class ExcelService:
             license_end = self._normalize_date(license_end_cell.value,
                                                row, license_end_col)
             if license_end is None:
+                errors.append(f'Строка {row}: не удалось прочитать '
+                              f'дату окончания лицензии')
                 continue
 
             ability_date = self._normalize_date(ability_date_cell.value,
@@ -76,6 +93,9 @@ class ExcelService:
                     renewal_date, self.config.deadline_for_submission
                 )
 
+            if reissue_date == target_date:
+                objects_to_notify.append(str(license_name))
+
             ability_date_cell.value = ability_date
             renewal_date_cell.value = renewal_date
             reissue_date_cell.value = reissue_date
@@ -85,8 +105,8 @@ class ExcelService:
                 cell.number_format = self.config.date_format
                 cell.border = self.cell_border
 
-        # filename = datetime.now().strftime('%Y-%m-%d_%H-%M')
         wb.save('data/_submissions.xlsx')
+        return ProcessResult(objects_to_notify, errors)
 
     def _get_headers(self, ws) -> dict[str, int]:
         """Извлекает названия колонок."""
@@ -144,3 +164,13 @@ class ExcelService:
             if self.calendar.is_working_day(current):
                 remaining -= 1
         return current
+
+    def _add_working_days(self, start_date: date, days: int) -> date:
+        current = start_date
+        remaining = days
+        while remaining > 0:
+            current += timedelta(days=1)
+            if self.calendar.is_working_day(current):
+                remaining -= 1
+        return current
+
