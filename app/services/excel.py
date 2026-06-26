@@ -52,67 +52,37 @@ class ExcelService:
             reissue_date_cell = ws.cell(row, reissue_col)
 
             license_name = license_name_cell.value
-
-            # license_end_value = license_end_cell.value
-            # if isinstance(license_end_value, datetime):
-            #     license_end = license_end_value.date()
-            # elif isinstance(license_end_value, date):
-            #     license_end = license_end_value
-            # else:
-            #     self.logger.error("В строке %d неверный формат даты", row)
-            #     continue
-
-            # if ability_date_cell.value is None:
-            #     ability_date = license_end - timedelta(days=self.config.days_before_submission)
-            #     ability_date_cell.value = ability_date
-            #     ability_date_cell.number_format = self.config.date_format
-
-            # if renewal_date_cell.value is None:
-            #     renewal_date = self.subtract_working_days(license_end, self.config.deadline_for_submission)
-            #     renewal_date_cell.value = renewal_date
-            #     renewal_date_cell.number_format = self.config.date_format
-
-            # if reissue_date_cell.value is None:
-            #     renewal_value = renewal_date_cell.value
-            #     if isinstance(renewal_value, datetime):
-            #         renewal_value = renewal_value.date()
-            #     reissue_date = self.subtract_working_days(renewal_value, self.config.deadline_for_submission)
-            #     reissue_date_cell.value = reissue_date
-            #     reissue_date_cell.number_format = self.config.date_format
-
-
-            license_end = license_end_cell.value.date()  # Везде делай date
-
-            if not isinstance(license_end, (date, datetime)):
-                self.logger.error('В строке %d, колонке %d '
-                                  'неверный формат даты', row, license_end_col)
+            license_end = self._normalize_date(license_end_cell.value,
+                                               row, license_end_col)
+            if license_end is None:
                 continue
 
-            ability_date = ability_date_cell.value
+            ability_date = self._normalize_date(ability_date_cell.value,
+                                                row, ability_col)
+            renewal_date = self._normalize_date(renewal_date_cell.value,
+                                                row, renewal_col)
+            reissue_date = self._normalize_date(reissue_date_cell.value,
+                                                row, reissue_col)
 
-            if ability_date is not None:
-                continue
-
-            ability_date = license_end - timedelta(
+            if ability_date is None:
+                ability_date = license_end - timedelta(
                     days=self.config.days_before_submission
-                    )
+                )
 
-            renewal_date = (
-                renewal_date_cell.value or
-                license_end - timedelta(
-                    days=self.config.deadline_for_submission
+            if renewal_date is None:
+                renewal_date = self._subtract_working_days(
+                    license_end, self.config.deadline_for_submission
                 )
-            )
-            reissue_date = (
-                reissue_date_cell.value or
-                renewal_date - timedelta(
-                    days=self.config.deadline_for_submission
+
+            if reissue_date is None:
+                reissue_date = self._subtract_working_days(
+                    renewal_date, self.config.deadline_for_submission
                 )
-            )
-            # перезаписываем
+
             ability_date_cell.value = ability_date
             renewal_date_cell.value = renewal_date
             reissue_date_cell.value = reissue_date
+
             for cell in (ability_date_cell, renewal_date_cell,
                          reissue_date_cell):
                 cell.number_format = self.config.date_format
@@ -120,7 +90,6 @@ class ExcelService:
 
         filename = datetime.now().strftime('%Y-%m-%d_%H-%M')
         wb.save(f'data/{filename}_submissions.xlsx')
-        print(self.calendar.holidays(2026))
 
     def _get_headers(self, ws) -> dict[str, int]:
         """Извлекает названия колонок."""
@@ -148,7 +117,28 @@ class ExcelService:
 
             self.logger.debug('Add column: %s', column_name)
 
-    def subtract_working_days(self, start_date: date, days: int) -> date:
+    def _normalize_date(self, date_value, row: int, col: int) -> date | None:
+        if (isinstance(date_value, date)
+                and not isinstance(date_value, datetime)):
+            return date_value
+
+        if isinstance(date_value, datetime):
+            return date_value.date()
+
+        message = (f'Неподдерживаемый формат даты в строке {row}, '
+                   f'колонке {col}: {date_value!r}')
+
+        if isinstance(date_value, str):
+            try:
+                return datetime.strptime(date_value, '%d.%m.%Y').date()
+            except ValueError:
+                self.logger.error(message)
+                return None
+
+        self.logger.error(message)
+        return None
+
+    def _subtract_working_days(self, start_date: date, days: int) -> date:
         """При расчете новой даты учитывает рабочие и праздничные дни."""
         current = start_date
         remaining = days
