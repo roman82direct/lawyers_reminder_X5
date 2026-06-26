@@ -1,6 +1,7 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
 from openpyxl import load_workbook
 from openpyxl.styles import Alignment, Border, Font, Side
@@ -14,8 +15,9 @@ from app.config import ExcelConfig
 class ProcessResult:
     """Датакласс результатов обработки xlsx-файла."""
 
-    objects_to_notify: list[str]
-    errors: list[str]
+    objects_to_notify: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    success: bool = True
 
 
 class ExcelService:
@@ -64,6 +66,11 @@ class ExcelService:
             reissue_date_cell = ws.cell(row, reissue_col)
 
             license_name = license_name_cell.value
+            if not license_name:
+                errors.append(f'Строка {row}: не удалось прочитать '
+                              f'название объекта')
+                continue
+
             license_end = self._normalize_date(license_end_cell.value,
                                                row, license_end_col)
             if license_end is None:
@@ -105,8 +112,18 @@ class ExcelService:
                 cell.number_format = self.config.date_format
                 cell.border = self.cell_border
 
-        wb.save('data/_submissions.xlsx')
-        return ProcessResult(objects_to_notify, errors)
+        new_file = Path('data/_submissions.xlsx')
+        try:
+            wb.save(new_file)
+        except PermissionError:
+            errors.append(
+                'Файл Excel открыт пользователем. '
+                'Закройте его и запустите программу снова.'
+            )
+            return ProcessResult(errors=errors, success=False)
+
+        return ProcessResult(objects_to_notify=objects_to_notify,
+                             errors=errors)
 
     def _get_headers(self, ws) -> dict[str, int]:
         """Извлекает названия колонок."""
@@ -142,18 +159,14 @@ class ExcelService:
         if isinstance(date_value, datetime):
             return date_value.date()
 
-        message = (f'Неподдерживаемый формат даты в строке {row}, '
-                   f'колонке {col}: {date_value!r}')
-
         if isinstance(date_value, str):
             try:
                 return datetime.strptime(date_value, '%d.%m.%Y').date()
             except ValueError:
+                message = (f'Неподдерживаемый формат даты в строке {row}, '
+                           f'колонке {col}: {date_value!r}')
                 self.logger.error(message)
                 return None
-
-        # self.logger.error(message)
-        return None
 
     def _subtract_working_days(self, start_date: date, days: int) -> date:
         """При расчете новой даты учитывает рабочие и праздничные дни."""
@@ -173,4 +186,3 @@ class ExcelService:
             if self.calendar.is_working_day(current):
                 remaining -= 1
         return current
-

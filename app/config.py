@@ -1,4 +1,5 @@
 import logging
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -28,6 +29,6 @@ def setup_logging():
         format='%(asctime)s %(levelname)s %(name)s %(message)s',
         handlers=(
             logging.FileHandler('logs/app.log', encoding='utf-8'),
-            logging.StreamHandler(),
+            logging.StreamHandler(sys.stdout),
         ),
     )

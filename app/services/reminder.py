@@ -9,22 +9,26 @@ def create_notification_text(result: ProcessResult) -> str:
     """Собирает текст уведомления с данными полученными при обработке xlsx."""
     parts: list[str] = []
 
-    if result.objects_to_notify:
-        parts.append(
-            f'Осталось {config.notify_before_days} рабочих дня '
-            f'до подачи заявления на переоформление:\n' + '\n'.join(
-                f'- {obj}' for obj in result.objects_to_notify
-            )
-        )
-    else:
-        parts.append('Срочных переоформлений сегодня нет.')
-
     if result.errors:
         parts.append(
             '\nОшибки:\n' + '\n'.join(f'- {err}' for err in result.errors)
         )
 
-    return '\n'.join(parts)
+    if not result.success:
+        parts.append('Ошибка доступа: файл не сохранен!')
+        return '\n\n'.join(parts)
+
+    if result.objects_to_notify:
+        parts.append(
+            f'Осталось {config.notify_before_days} рабочих дня до подачи '
+            f'заявления на переоформление по объектам:\n' + '\n'.join(
+                f'- {address}' for address in result.objects_to_notify
+            )
+        )
+    else:
+        parts.append('Срочных переоформлений сегодня нет.')
+
+    return '\n\n'.join(parts)
 
 
 class ReminderService:
