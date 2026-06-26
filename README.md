@@ -68,6 +68,12 @@ ReminderService — координирует бизнес-логику.
 ExcelService — читает и пишет файл.
 NotificationService — отправляет уведомление с помощью desktop_notifier.
 
+**Скомпилировать .exe так:**
+```
+pyinstaller --onefile --noconsole --collect-all desktop_notifier app/main.py
+```
+
+
 Добавь file lock и обработку случая, когда Excel открыт пользователем.
 Вынеси конфиг в .env.
 Сделай отдельный режим --run-once для ручного запуска и тестов.
