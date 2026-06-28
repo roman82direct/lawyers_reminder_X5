@@ -15,7 +15,7 @@ def create_notification_text(result: ProcessResult) -> str:
         )
 
     if not result.success:
-        parts.append('Ошибка доступа: файл не сохранен!')
+        parts.append('Ошибка: файл не сохранен!')
         return '\n\n'.join(parts)
 
     if result.objects_to_notify:

@@ -1,4 +1,5 @@
 desktop-notifier==6.2.0
 openpyxl==3.1.5
 pyinstaller==6.21.0
+python-dotenv==1.2.2
 workalendar==17.0.0

@@ -33,12 +33,21 @@ class ExcelService:
 
     def process_file(self) -> ProcessResult:
         """Обрабатывает файл по тех. заданию."""
-        wb = load_workbook(self.config.excel_path)
-        ws = (wb[self.config.sheet_name] if self.config.sheet_name
-              else wb.active)
-
         objects_to_notify: list[str] = []
         errors: list[str] = []
+
+        try:
+            wb = load_workbook(self.config.excel_path)
+        except FileNotFoundError:
+            msg = f'Файл не найден: {self.config.excel_path}'
+            self.logger.error(msg)
+            errors.append(msg)
+            return ProcessResult(objects_to_notify=objects_to_notify,
+                                 errors=errors,
+                                 success=False)
+
+        ws = (wb[self.config.sheet_name] if self.config.sheet_name
+              else wb.active)
 
         for column in (
             self.config.ability_date_column,
@@ -112,7 +121,7 @@ class ExcelService:
                 cell.number_format = self.config.date_format
                 cell.border = self.cell_border
 
-        new_file = Path('data/_submissions.xlsx')
+        new_file = Path('data/АЛ Перекресток_с датами.xlsx')
         try:
             wb.save(new_file)
         except PermissionError:
