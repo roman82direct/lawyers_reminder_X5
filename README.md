@@ -23,7 +23,7 @@
 | Excel | openpyxl | Чтение/запись xlsx |
 | Уведомления |	desktop_notifier | Push-уведомление в Windows |
 | Логи | logging | Диагностика и сопровождение |
-| Автозапуск | Windows Task Scheduler | Надежный запуск при старте/по времени |
+| Автозапуск | Windows Task Scheduler | Запуск при старте/по времени |
 
 ## Архитектура
 
@@ -43,9 +43,6 @@ lawyers_reminder_X5/
 │   └── submissions.xlsx
 ├── logs/
 │   └── app.log
-├── dist/
-├── build/
-├── pyinstaller.spec
 ├── requirements.txt
 └── README.md
 ```
@@ -69,8 +66,5 @@ NotificationService — отправляет уведомление с помо�
 
 **Скомпилировать .exe так:**
 ```
-pyinstaller --onefile --noconsole --collect-all desktop_notifier app/main.py
+pyinstaller --onefile --noconsole --collect-all desktop_notifier --name lowyer_reminder app/main.py
 ```
-
-Вынеси конфиг в .env.
-Сделай отдельный режим --run-once для ручного запуска и тестов.
